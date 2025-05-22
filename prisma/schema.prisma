@@ -1,0 +1,676 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum YesNo {
+  y
+  n
+}
+
+enum Size {
+  ANY
+  S
+  M
+  L
+  XL
+}
+
+enum YesNoEmpty {
+  y
+  n
+  empty @map("")
+}
+
+enum RosterSourceStatus {
+  old
+  new
+  updated
+  skipped
+  empty @map("")
+}
+
+enum Gender {
+  F
+  M
+  empty @map("")
+}
+
+enum HighAcadStandard {
+  Y
+  N
+  empty @map("")
+}
+
+enum ScholarshipStatus {
+  U
+  S
+  V
+  NotASenior @map("Not a Senior")
+  C
+  empty @map("")
+}
+
+enum Handedness {
+  L
+  R
+}
+
+enum LeadType {
+  athlete
+  parent
+  coach_packet
+}
+
+enum FilledUpdateRosterForm {
+  athlete
+  parent
+}
+
+enum ImportDivisionsMode {
+  and
+  only
+}
+
+enum Coaches {
+  zero @map("0")
+  one @map("1")
+  two @map("2")
+}
+
+enum UserType {
+  admin
+  college
+  athlete
+  club
+  touchstat
+  event_owner
+  sport_admin
+  team_coach
+  parent
+  recruiter
+}
+
+enum Relationship {
+  mother
+  father
+  stepmother
+  stepfather
+  friend_of_family
+  guardian
+  sibling
+  grandparent
+  uncle
+  aunt
+  other
+}
+
+// Club Management
+model club_master {
+  club_master_id             Int              @id @default(autoincrement())
+  old_roster_clubs_master_id Int?             @default(0)
+  club_name                  String?
+  region_code                String?          @db.VarChar(5)
+  club_code                  String?          @db.VarChar(30)
+  address1                   String?          @db.VarChar(50)
+  address2                   String?          @db.VarChar(50)
+  city                       String?          @db.VarChar(50)
+  state                      String?          @db.VarChar(2)
+  zip                        String?          @db.VarChar(10)
+  url                        String?          @db.VarChar(300)
+  office_phone               String?          @db.VarChar(25)
+  other_phone                String?          @db.VarChar(25)
+  fax                        String?          @db.VarChar(25)
+  email                      String?          @db.VarChar(255)
+  date_modified              DateTime         @default(now()) @updatedAt
+  flag                       String?          @db.VarChar(15)
+  date_created               Int
+  sports_id                  Int              @default(2)
+  main_club_staff_master_id  Int?             @default(0)
+  active                     YesNo?           @default(y)
+  valid_club_master_id       Int?
+  active_last_year           YesNo            @default(n)
+  hidden                     YesNo            @default(n)
+  coordinator_first          String?          @db.VarChar(45)
+  coordinator_last           String?          @db.VarChar(45)
+  coordinator_email          String?          @db.VarChar(75)
+  coordinator_phone          String?          @db.VarChar(25)
+  date_admin_modified        DateTime?
+  virtual                    YesNo?           @default(n)
+  club_users                 club_user[]
+  teams                      team_master[]
+  athletes                   athlete_master[]
+  staff                      club_staff_master[]
+}
+
+model club_user {
+  club_user_id         Int         @id @default(autoincrement())
+  club_staff_master_id Int?
+  users_id             Int?
+  sports_id            Int?
+  roles_id             Int?
+  club_master_id       Int?
+  team_master_id       Int?
+  birthdate            DateTime?   @db.Date
+  gender               String?     @db.VarChar(1)
+  first                String?     @db.VarChar(40)
+  nick                 String?     @db.VarChar(40)
+  last                 String?     @db.VarChar(40)
+  phoneh               String?     @db.VarChar(20)
+  phonec               String?     @db.VarChar(20)
+  phonew               String?     @db.VarChar(20)
+  email                String?     @db.VarChar(255)
+  haddress1            String?     @db.VarChar(100)
+  haddress2            String?     @db.VarChar(50)
+  hcity                String?     @db.VarChar(50)
+  hstate               String?     @db.VarChar(2)
+  hzip                 String?     @db.VarChar(10)
+  waddress1            String?     @db.VarChar(50)
+  waddress2            String?     @db.VarChar(50)
+  wstate               String?     @db.VarChar(2)
+  wcity                String?     @db.VarChar(25)
+  wzip                 String?     @db.VarChar(10)
+  date_modified        DateTime    @default(now()) @updatedAt
+  club                 club_master? @relation(fields: [club_master_id], references: [club_master_id])
+  user                 users?      @relation(fields: [users_id], references: [users_id])
+}
+
+// Team Management
+model team_master {
+  id                      Int                 @id @default(autoincrement()) @map("team_master_id")
+  old_roster_teams_master_id Int              @default(0)
+  team_roster_id          Int?
+  date_modified           DateTime            @default(now()) @updatedAt
+  sports_id               Int                 @default(2)
+  club_id                 Int                 @default(1) @map("club_master_id")
+  usav_code               String?             @map("organization_code") @db.VarChar(19)
+  name                    String?             @map("team_name") @db.VarChar(100)
+  schedule_name           String?             @db.VarChar(50)
+  age                     Int
+  rank                    String?             @db.VarChar(1)
+  division                String?             @db.VarChar(75)
+  bracket                 String?             @db.VarChar(25)
+  pool                    String?             @db.VarChar(16)
+  seed                    Int?
+  placement               Int?
+  state                   String?             @db.VarChar(2)
+  zip                     String?             @db.VarChar(10)
+  chapter                 String?             @db.VarChar(50)
+  uni_color               String?             @db.VarChar(50)
+  uni_reverse             String?             @default("n") @db.VarChar(1)
+  flag                    String?             @db.MediumText
+  deleted                 Int                 @default(0)
+  date_created            Int
+  hidden                  YesNo               @default(n)
+  virtual                 YesNo?              @default(n)
+  club                    club_master         @relation(fields: [club_id], references: [club_master_id])
+  rosters                 team_roster[]       @relation("TeamMasterToTeamRoster")
+  athlete_teams           athlete_team[]
+  tournament_attending    tournament_attending[]
+}
+
+model team_roster {
+  team_roster_id            Int             @id @default(autoincrement())
+  date_modified             DateTime        @default(now()) @updatedAt
+  team_master_id            Int?            @default(1)
+  old_roster_teams_id       Int             @default(0)
+  tournament_id             Int
+  roster_source_id          Int             @default(0)
+  roster_source_provider    String          @default("") @db.VarChar(4)
+  roster_source_club_row_id String
+  roster_source_team_row_id String?
+  roster_source_last_update DateTime?
+  roster_source_status      RosterSourceStatus @default(empty)
+  club_roster_id            Int?
+  organization_code         String?         @db.VarChar(19)
+  team_name                 String          @default("") @db.VarChar(100)
+  schedule_name             String?         @db.VarChar(50)
+  age                       Int
+  rank                      String?         @db.VarChar(1)
+  division                  String?         @db.VarChar(75)
+  bracket                   String?         @db.VarChar(25)
+  pool                      String?         @db.VarChar(16)
+  seed                      Int?
+  placement                 Int?
+  state                     String?         @db.VarChar(2)
+  zip                       String?         @db.VarChar(10)
+  chapter                   String?         @db.VarChar(50)
+  uni_color                 String?         @db.VarChar(50)
+  uni_reverse               String?         @default("n") @db.VarChar(1)
+  flag                      String?         @db.MediumText
+  deleted                   Int             @default(0)
+  date_created              Int
+  combined_tournament_id    Int?
+  locked_row                YesNo           @default(n)
+  locked_columns            String?         @db.VarChar(511)
+  team                      team_master?    @relation("TeamMasterToTeamRoster", fields: [team_master_id], references: [id])
+  athletes                  athlete_master[]
+  athlete_rosters           athlete_roster[]
+}
+
+// Athlete Management
+model athlete_master {
+  athlete_master_id             Int             @id @default(autoincrement())
+  athlete_user_id               Int?
+  old_roster_athletes_master_id Int?            @default(0)
+  sports_id                     Int             @default(2)
+  roster_source_id              Int?
+  roster_source_ath_row_id      String?         @db.VarChar(50)
+  roster_source_last_update     DateTime?
+  roster_source_team_row_id     String?         @db.VarChar(50)
+  roster_source_club_row_id     String?         @db.VarChar(50)
+  club_roster_id                Int?            @default(1)
+  club_master_id                Int             @default(1)
+  team_roster_id                Int?            @default(1)
+  team_master_id                Int             @default(1)
+  first                         String?         @db.VarChar(40)
+  last                          String?         @db.VarChar(40)
+  haddress1                     String?         @db.VarChar(100)
+  haddress2                     String?         @db.VarChar(50)
+  hcity                         String?         @db.VarChar(50)
+  hstate                        String?         @db.VarChar(2)
+  hzip                          String?         @db.VarChar(10)
+  phoneh                        String?         @db.VarChar(20)
+  phonec                        String?         @db.VarChar(20)
+  email                         String?         @db.VarChar(75)
+  height                        Int?            @default(0)
+  gender                        Gender          @default(empty)
+  high_acad_standard            HighAcadStandard @default(empty)
+  high_school                   String?         @db.VarChar(100)
+  high_school_address           String?         @db.VarChar(150)
+  scholarship_status            ScholarshipStatus @default(empty)
+  status_verified               Int?
+  gradyear                      Int?
+  birthdate                     DateTime?       @db.Date
+  college_name                  String?         @db.VarChar(255)
+  position1                     Int?            @default(0)
+  position2                     Int?            @default(0)
+  position3                     Int?            @default(0)
+  position4                     Int?            @default(0)
+  uniform1                      Int?
+  uniform2                      Int?
+  soundex_first                 String?         @db.VarChar(25)
+  soundex_last                  String?         @db.VarChar(25)
+  metaphone_last                String?         @db.VarChar(16)
+  flag                          String?         @db.VarChar(15)
+  date_modified                 DateTime        @default(now()) @updatedAt
+  date_created                  Int
+  date_verified                 DateTime?
+  date_admin_modified           DateTime?
+  has_changes                   YesNo           @default(n)
+  usav_id                       String?         @db.VarChar(30)
+  plays_sand_vb                 YesNo?          @default(n)
+  token                         String?         @db.VarChar(8) @unique
+  anonymity                     YesNo?          @default(n)
+  ncsa_client_id                Int?
+  usa_ntdp                      YesNo?          @default(n)
+  cp_id                         Int?
+  additional_fields             String?         @db.MediumText
+  parent1_relationship          Relationship?
+  parent1_name                  String?         @db.VarChar(40)
+  parent1_email                 String?         @db.VarChar(75)
+  parent1_phonec                String?         @db.VarChar(20)
+  parent2_relationship          Relationship?
+  parent2_name                  String?         @db.VarChar(40)
+  parent2_email                 String?         @db.VarChar(75)
+  parent2_phonec                String?         @db.VarChar(20)
+  is_lead                       YesNo?
+  gpa                           Decimal?        @db.Decimal(4, 1)
+  nickname                      String?         @db.VarChar(40)
+  sat_total                     Int?
+  act                           Int?
+  club                          club_master     @relation(fields: [club_master_id], references: [club_master_id])
+  team_roster                   team_roster?    @relation(fields: [team_roster_id], references: [team_roster_id])
+  teams                         athlete_team[]
+  athlete_rosters               athlete_roster[]
+}
+
+model athlete_team {
+  athlete_team_id   Int             @id @default(autoincrement())
+  created           DateTime        @default(now())
+  modified          DateTime        @default(now()) @updatedAt
+  athlete_master_id Int
+  team_master_id    Int
+  club_master_id    Int
+  team_roster_id    Int?
+  tournament_id     Int?
+  athlete           athlete_master  @relation(fields: [athlete_master_id], references: [athlete_master_id])
+  team              team_master     @relation(fields: [team_master_id], references: [id])
+}
+
+model athlete_roster {
+  athlete_roster_id                 Int             @id @default(autoincrement())
+  athlete_master_id                 Int?
+  old_roster_athletes_master_id     Int?
+  old_roster_athletes_id            Int?
+  sports_id                         Int             @default(2)
+  roster_source_id                  Int?
+  roster_source_provider            String?         @db.VarChar(4)
+  roster_source_ath_row_id          String?         @db.VarChar(50)
+  roster_source_last_update         DateTime?
+  roster_source_status              RosterSourceStatus @default(empty)
+  roster_source_team_row_id         String?         @db.VarChar(50)
+  roster_source_club_row_id         String?         @db.VarChar(50)
+  auto_match_master_id              Int?
+  tournament_id                     Int?
+  club_roster_id                    Int?            @default(1)
+  club_master_id                    Int?            @default(1)
+  team_roster_id                    Int?            @default(1)
+  team_master_id                    Int?            @default(1)
+  first                             String?         @db.VarChar(40)
+  last                              String?         @db.VarChar(40)
+  haddress1                         String?         @db.VarChar(100)
+  haddress2                         String?         @db.VarChar(50)
+  hcity                             String?         @db.VarChar(50)
+  hstate                            String?         @db.VarChar(2)
+  hzip                              String?         @db.VarChar(10)
+  hzip_flag                         String?         @db.VarChar(2)
+  phoneh                            String?         @db.VarChar(20)
+  phonec                            String?         @db.VarChar(20)
+  email                             String?         @db.VarChar(75)
+  height                            Int?
+  gender                            Gender?
+  high_acad_standard                HighAcadStandard? @default(empty)
+  high_school                       String?         @db.VarChar(100)
+  high_school_address               String?         @db.VarChar(150)
+  scholarship_status                ScholarshipStatus @default(empty)
+  status_verified                   Int?
+  gradyear                          Int?
+  birthdate                         DateTime?       @db.Date
+  college_name                      String?         @db.VarChar(255)
+  position1                         Int?            @default(0)
+  position2                         Int?            @default(0)
+  position3                         Int?            @default(0)
+  position4                         Int?            @default(0)
+  uniform1                          String?         @db.VarChar(10)
+  uniform2                          Int?
+  gpa                               Decimal?        @db.Decimal(4, 1)
+  act                               Int?
+  satm                              String?         @db.VarChar(4)
+  satv                              String?         @db.VarChar(4)
+  sate                              String?         @db.VarChar(4)
+  satcr                             String?         @db.VarChar(4)
+  satw                              String?         @db.VarChar(4)
+  handed                            Handedness?
+  throws                            Handedness?
+  bats                              String?         @db.VarChar(6)
+  soundex_first                     String?         @db.VarChar(25)
+  soundex_last                      String?         @db.VarChar(25)
+  metaphone_last                    String?         @db.VarChar(16)
+  flag                              String?         @db.MediumText
+  date_modified                     DateTime        @default(now()) @updatedAt
+  date_created                      Int
+  date_verified                     DateTime?
+  date_admin_modified               DateTime?
+  usav_id                           String?         @db.VarChar(30)
+  combined_tournament_id            Int?
+  notified                          DateTime?
+  locked_row                        YesNo           @default(n)
+  locked_columns                    String?         @db.VarChar(511)
+  currently_used_in_pair_auto_match YesNo           @default(n)
+  additional_fields                 String?         @db.MediumText
+  parent1_name                      String?         @db.VarChar(40)
+  parent1_email                     String?         @db.VarChar(75)
+  parent1_phonec                    String?         @db.VarChar(20)
+  parent2_name                      String?         @db.VarChar(40)
+  parent2_email                     String?         @db.VarChar(75)
+  parent2_phonec                    String?         @db.VarChar(20)
+  is_lead                           YesNo?
+  nickname                          String?         @db.VarChar(40)
+  ncsa_client_id                    Int?
+  hash_email_status                 String?         @db.VarChar(25)
+  sat_total                         Int?
+  lead_type                         LeadType?
+  calendly_url                      String?         @db.VarChar(500)
+  calendly_opened                   YesNo?
+  filled_update_roster_form         FilledUpdateRosterForm?
+  athlete                           athlete_master? @relation(fields: [athlete_master_id], references: [athlete_master_id])
+  tournament                        tournament?     @relation(fields: [tournament_id], references: [tournament_id])
+  team_roster                       team_roster?    @relation(fields: [team_roster_id], references: [team_roster_id])
+}
+
+// Staff Management
+model club_staff_master {
+  club_staff_master_id       Int             @id @default(autoincrement())
+  old_roster_staff_master_id Int?
+  sports_id                  Int
+  roles_id                   Int             @default(1)
+  club_master_id             Int             @default(1)
+  team_master_id             Int             @default(1)
+  birthdate                  DateTime?       @db.Date
+  gender                     String?         @db.VarChar(1)
+  first                      String?         @db.VarChar(40)
+  nick                       String?         @db.VarChar(40)
+  last                       String?         @db.VarChar(40)
+  phoneh                     String?         @db.VarChar(20)
+  phonec                     String?         @db.VarChar(20)
+  phonew                     String?         @db.VarChar(20)
+  email                      String?         @db.VarChar(255)
+  haddress1                  String?         @db.VarChar(100)
+  haddress2                  String?         @db.VarChar(50)
+  hcity                      String?         @db.VarChar(50)
+  hstate                     String?         @db.VarChar(2)
+  hzip                       String?         @db.VarChar(10)
+  waddress1                  String?         @db.VarChar(50)
+  waddress2                  String?         @db.VarChar(50)
+  wstate                     String?         @db.VarChar(2)
+  wcity                      String?         @db.VarChar(25)
+  wzip                       String?         @db.VarChar(10)
+  date_modified              DateTime        @default(now()) @updatedAt
+  master_row                 Int?
+  usav_id                    String?         @db.VarChar(30)
+  date_created               Int             @default(0)
+  club                       club_master     @relation(fields: [club_master_id], references: [club_master_id])
+  rosters                    club_staff_roster[]
+}
+
+model club_staff_roster {
+  club_staff_roster_id              Int               @id @default(autoincrement())
+  club_staff_master_id              Int?
+  old_roster_staff_id               Int?
+  sports_id                         Int
+  roster_source_id                  Int?
+  roster_source_provider            String?           @db.VarChar(4)
+  roster_source_staff_row_id        String?           @db.VarChar(50)
+  roster_source_last_update         DateTime?
+  roster_source_status              RosterSourceStatus?
+  roster_source_team_row_id         String?           @db.VarChar(50)
+  roster_source_club_row_id         String?           @db.VarChar(50)
+  auto_match_master_id              Int?
+  roles_id                          Int               @default(1)
+  tournament_id                     Int?
+  club_roster_id                    Int?
+  club_master_id                    Int?
+  team_roster_id                    Int?
+  team_master_id                    Int?
+  birthdate                         DateTime?         @db.Date
+  gender                            String?           @db.VarChar(1)
+  first                             String?           @db.VarChar(40)
+  nick                              String?           @db.VarChar(40)
+  last                              String?           @db.VarChar(40)
+  phoneh                            String?           @db.VarChar(20)
+  phonec                            String?           @db.VarChar(20)
+  phonew                            String?           @db.VarChar(20)
+  email                             String?           @db.VarChar(255)
+  haddress1                         String?           @db.VarChar(100)
+  haddress2                         String?           @db.VarChar(50)
+  hcity                             String?           @db.VarChar(50)
+  hstate                            String?           @db.VarChar(2)
+  hzip                              String?           @db.VarChar(10)
+  waddress1                         String?           @db.VarChar(50)
+  waddress2                         String?           @db.VarChar(50)
+  wstate                            String?           @db.VarChar(2)
+  wcity                             String?           @db.VarChar(25)
+  wzip                              String?           @db.VarChar(10)
+  date_modified                     DateTime          @default(now()) @updatedAt
+  combined_tournament_id            Int?
+  usav_id                           String?           @db.VarChar(30)
+  locked_row                        YesNo             @default(n)
+  locked_columns                    String?           @db.VarChar(511)
+  date_created                      Int               @default(0)
+  currently_used_in_pair_auto_match YesNo?            @default(n)
+  staff                             club_staff_master? @relation(fields: [club_staff_master_id], references: [club_staff_master_id])
+}
+
+// Tournament Management
+model tournament {
+  tournament_id                   Int                   @id
+  sports_id                       Int
+  name                            String?               @db.VarChar(100)
+  long_name                       String?               @db.MediumText
+  provider                        String?               @default("") @db.VarChar(4)
+  provider_tournament_id          String?               @default("") @db.VarChar(50)
+  date_modified                   DateTime              @default(now()) @updatedAt
+  datestart                       DateTime              @default("1970-01-01T00:00:00Z")
+  dateend                         DateTime              @default("1970-01-01T00:00:00Z")
+  display                         Int?                  @default(0)
+  downloadable                    YesNo?                @default(n)
+  additional_info                 String?               @db.MediumText
+  showcase_event                  YesNo                 @default(n)
+  free                            YesNo                 @default(n)
+  use_after_date                  YesNo                 @default(n)
+  min_age                         Int?                  @default(15)
+  max_age                         Int?                  @default(18)
+  date_pig_available              DateTime?
+  has_alpha_courts                YesNo?               @default(n)
+  last_import                     DateTime?
+  city                            String                @default("") @db.VarChar(50)
+  state                           String                @default("") @db.VarChar(2)
+  facility                        String                @default("") @db.VarChar(4096)
+  teams_hidden                    YesNo                 @default(n)
+  clubs_hidden                    YesNo                 @default(n)
+  has_admission_barcode           YesNo                 @default(n)
+  push_club_roster_to_master      YesNo                 @default(y)
+  push_team_roster_to_master      YesNo                 @default(y)
+  push_athlete_roster_to_master   YesNo                 @default(y)
+  plays_sand_vb                   YesNo                 @default(n)
+  json                            String?               @default("{\"split_schedule_by_days\": false, \"split_schedule_by_divisions\": false}") @db.VarChar(4096)
+  import_14_open                  YesNo                 @default(n)
+  import_divisions                String?               @default("") @db.VarChar(4096)
+  import_divisions_mode           ImportDivisionsMode?   @default(and)
+  aes_event_url                   String?               @db.VarChar(255)
+  schedule_provider_type          String?               @db.VarChar(50)
+  schedule_provider_tournament_id String?               @db.VarChar(255)
+  sw_event_id                     Int?
+  tournament_director_id          Int?
+  virtual                         YesNo                 @default(n)
+  requires_access_code            String?               @default("") @db.VarChar(50)
+  ncsa_event_id                   Int?
+  auto_sync_ncsa                  YesNo                 @default(n)
+  sync_athletes_with_ncsa         YesNoEmpty?           @default(empty)
+  is_usav_event                   YesNo                 @default(n)
+  download_all_teams              YesNo                 @default(n)
+  size                            Size?                 @default(ANY)
+  post_event_purchase             YesNo?
+  scheduler_enabled               Int?                  @default(0)
+  scheduler_config                Json?
+  scheduler_hash_team             String?               @db.VarChar(255)
+  scheduler_hash_event            String?               @db.VarChar(255)
+  scheduler_hash_schedule         String?               @db.VarChar(255)
+  event_owner_sport_id            Int?
+  information                     String?               @db.VarChar(2000)
+  event_billing_id                Int?
+  roster_provider_id              Int?
+  roster_provider_note            String?               @db.VarChar(200)
+  schedule_provider_id            Int?
+  schedule_provider_note          String?               @db.VarChar(200)
+  attending                       tournament_attending[]
+  athlete_rosters                 athlete_roster[]
+}
+
+model tournament_attending {
+  tournament_attending_id Int       @id @default(autoincrement())
+  college_program_id      Int
+  tournament_id           Int
+  coaches                 Coaches?
+  date_modified           DateTime  @default(now()) @updatedAt
+  attending               YesNoEmpty @default(empty)
+  team_id                 Int
+  college_id              Int?
+  registered_at           DateTime  @default(now())
+  tournament              tournament @relation(fields: [tournament_id], references: [tournament_id])
+  team                    team_master @relation(fields: [team_id], references: [id])
+}
+
+// User Management
+model users {
+  users_id                  Int         @id @default(autoincrement())
+  date_modified             DateTime    @default(now()) @updatedAt
+  sports_id                 Int
+  roles_id                  Int
+  type                      UserType?
+  username                  String      @unique @db.VarChar(75)
+  password                  String      @db.VarChar(32)
+  first                     String      @db.VarChar(40)
+  last                      String      @db.VarChar(40)
+  first_login               DateTime    @default("1970-01-01T00:00:01Z")
+  last_login                DateTime    @default("1970-01-01T00:00:01Z")
+  prev_last_login           DateTime?
+  uar_last_login            DateTime?
+  cp3_last_login            DateTime?
+  date_created              DateTime    @default("1970-01-01T00:00:01Z")
+  email                     String      @db.VarChar(75)
+  email_alternate           String?     @db.VarChar(75)
+  personal                  String?     @db.MediumText
+  portrait                  String?     @db.VarChar(255)
+  ip                        String?     @default("") @db.VarChar(40)
+  token                     String?     @db.VarChar(36)
+  token_date_created        DateTime?
+  avail_teams               Int?        @default(0)
+  avail_individuals         Int?        @default(0)
+  customer_id               String?     @db.VarChar(30)
+  card_info                 String?     @db.VarChar(30)
+  stripe_data               String?     @default("") @db.VarChar(512)
+  stripe_card_id            String?     @db.VarChar(30)
+  stripe_card_exp_date      DateTime?   @db.Date
+  last_date_purchased       DateTime?
+  pwd_hash                  String      @db.VarChar(255)
+  pwd_salt                  String      @db.VarChar(75)
+  allow_multiple_uar_logins Int         @default(0)
+  keycloak_user_id          String?     @db.VarChar(36)
+  old_username              String?     @db.VarChar(75)
+  club_users                club_user[]
+}
+
+// College Management
+model college {
+  college_id                       Int             @id @default(autoincrement())
+  old_colleges_id                  Int?            @default(0)
+  date_modified                    DateTime        @default(now()) @updatedAt
+  ope_id                           Int?            @default(0)
+  ipeds_id                         Int?
+  name                             String?         @db.VarChar(100)
+  sanctioning                      String?         @db.VarChar(50)
+  college_sanctioning_body_id      Int?            @default(1)
+  college_sanctioning_body_id_used Int?            @default(1)
+  college_conference_id            Int?            @default(1)
+  address                          String?         @db.VarChar(50)
+  city                             String?         @db.VarChar(50)
+  state                            String?         @db.VarChar(2)
+  zip                              String?         @db.VarChar(10)
+  latitude                         Decimal?        @db.Decimal(9, 6)
+  longitude                        Decimal?        @db.Decimal(9, 6)
+  general_telephone                String?         @db.VarChar(15)
+  financial_aid_telephone          String?         @db.VarChar(15)
+  administrative_telephone         String?         @db.VarChar(15)
+  url                              String?         @db.VarChar(300)
+  url_athletic                     String?         @db.VarChar(100)
+  undergrad_men                    Int?            @default(0)
+  undergrad_women                  Int?            @default(0)
+  total_enrollment                 Int?            @default(0)
+  school_long_name                 String?         @db.VarChar(255)
+  has_sports                       String?         @db.VarChar(1)
+  hidden                           YesNo           @default(n)
+  logo                             String?         @db.VarChar(256)
+  index_name                       String?         @db.VarChar(100)
+  index_zip                        String?         @db.VarChar(5)
+  index_general_telephone          String?         @db.VarChar(15)
+  index_url                        String?         @db.VarChar(50)
+}
